@@ -1,3 +1,5 @@
+package ru.study.utils;
+
 /**
  * Created with IntelliJ IDEA.
  * User: markdev
@@ -28,7 +30,7 @@ public class Pair<F, S> {
 
     @Override
     public String toString() {
-        return "Pair{"+first +
+        return "ru.study.utils.Pair{"+first +
                 ";" +second +
                 '}';
     }

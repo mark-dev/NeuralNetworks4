@@ -1,3 +1,9 @@
+package ru.study.core;
+
+import ru.study.utils.FixedBitSet;
+import ru.study.utils.MathExpressionParser;
+import ru.study.utils.Pair;
+
 import java.util.BitSet;
 
 /**
@@ -8,19 +14,23 @@ import java.util.BitSet;
  * To change this template use File | Settings | File Templates.
  */
 public class Person {
-    private static final double MUTATION_PROBABILITY = 0.05;
+    private static final double MUTATION_PROBABILITY = 0.09;
     private int bitSize;
     private int value;
     private FixedBitSet bits;
     private int adaptation;
+    private MathExpressionParser MEP;
 
-    public Person(int value, int bitSize) {
+    public Person(int value, int bitSize, MathExpressionParser MEP) {
         this.bitSize = bitSize;
+        this.MEP = MEP;
         setValue(value);
+
     }
 
-    public Person(FixedBitSet set) {
+    public Person(FixedBitSet set, MathExpressionParser MEP) {
         this.bitSize = set.length();
+        this.MEP = MEP;
         setValue(set);
     }
 
@@ -54,6 +64,10 @@ public class Person {
     }
 
 
+    public MathExpressionParser getMEP() {
+        return MEP;
+    }
+
     //
     public static Pair<Person, Person> crossing(Pair<Person, Person> pair) {
         Person p1 = pair.getFirst();
@@ -68,11 +82,13 @@ public class Person {
                 crossAndMutation(b1, i, p1.getBits().get(i));
                 crossAndMutation(b2, i, p2.getBits().get(i));
             } else {
+
                 crossAndMutation(b1, i, p2.getBits().get(i));
                 crossAndMutation(b2, i, p1.getBits().get(i));
             }
         }
-        Pair<Person, Person> res = new Pair<Person, Person>(new Person(b1), new Person(b2));
+        Pair<Person, Person> res = new Pair<Person, Person>(new Person(b1, p1.getMEP()),
+                new Person(b2, p1.getMEP()));
         System.out.println("crossing(" + crossingPoint + "): [" +
                 p1.bsString() + "," +
                 p2.bsString() + "] -> [" +
@@ -85,14 +101,14 @@ public class Person {
         double r = Math.random();
         destination.set(index, value);
         if (r < MUTATION_PROBABILITY) {
-            System.out.println("mutation occurs at index "+index + "(old value = "+value +")");
+            System.out.println("mutation occurs at index " + index + "(old value = " + value + ")");
             destination.flip(index);
         }
     }
 
     @Override
     public String toString() {
-        return "Person{" +
+        return "ru.study.core.Person{" +
                 "bitSize=" + bitSize +
                 ", value=" + value +
                 ", bits=" + (bsString() != null ? bsString() : "null") +
@@ -102,6 +118,34 @@ public class Person {
 
     public int getAdaptation() {
         return adaptation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Person)) return false;
+
+        Person person = (Person) o;
+
+        if (adaptation != person.adaptation) return false;
+        if (bitSize != person.bitSize) return false;
+        if (value != person.value) return false;
+        if (bits != null ? !bits.equals(person.bits) : person.bits != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = bitSize;
+        result = 31 * result + value;
+        result = 31 * result + (bits != null ? bits.hashCode() : 0);
+        result = 31 * result + adaptation;
+        return result;
+    }
+
+    public int getValue() {
+        return value;
     }
 
     //Internal
@@ -123,11 +167,12 @@ public class Person {
             }
         }
 
+
         return bs;
     }
 
     private int calcAdaptation() {
-        return -value*value+16*value+5;
+        return (int) MEP.solve(value);
     }
 
 }

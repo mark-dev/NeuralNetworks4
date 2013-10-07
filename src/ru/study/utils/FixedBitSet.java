@@ -1,3 +1,5 @@
+package ru.study.utils;
+
 import java.util.BitSet;
 
 /**
