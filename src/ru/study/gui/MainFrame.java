@@ -7,6 +7,13 @@ package ru.study.gui; /**
  */
 
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import ru.study.core.GeneticAlgSolver;
 import ru.study.core.Person;
 import ru.study.utils.MathExpressionParser;
@@ -65,8 +72,8 @@ public class MainFrame extends JFrame {
         panelTop.setPreferredSize(new Dimension(WIDTH, (int) (0.1 * HEIGHT)));
         panelCenter.setPreferredSize(new Dimension(WIDTH, (int) (0.65 * HEIGHT)));
         panelBottom.setPreferredSize(new Dimension(WIDTH, (int) (0.05 * HEIGHT)));
-        int currentHeight  = (int) fieldFunction.getPreferredSize().getHeight();
-        fieldFunction.setPreferredSize(new Dimension((int)(0.25*WIDTH),currentHeight));
+        int currentHeight = (int) fieldFunction.getPreferredSize().getHeight();
+        fieldFunction.setPreferredSize(new Dimension((int) (0.25 * WIDTH), currentHeight));
         // borders
         panelTop.setBorder(BorderFactory.createEtchedBorder());
 
@@ -108,15 +115,25 @@ public class MainFrame extends JFrame {
             MathExpressionParser MEP = new MathExpressionParser(fieldFunction.getText());
             Integer from = Integer.parseInt(fieldFrom.getText());
             Integer to = Integer.parseInt(fieldTo.getText());
-            if (genAlgSolver == null) {
-                genAlgSolver = new GeneticAlgSolver(this, MEP);
+            if (to > from && to > 0 && from >= 0) {
+                if (genAlgSolver == null) {
+                    genAlgSolver = new GeneticAlgSolver(this, MEP);
+                } else {
+                    genAlgSolver.setMEP(MEP);
+                }
+                Person res = genAlgSolver.solve(from, to);
+                labelResult.setText("result -> " + functionFormat(res.getValue(), res.getAdaptation()));
+                Pair<Integer, Integer> exRes = genAlgSolver.getExpectedResult(from, to);
+                labelExpectedResult.setText("expected -> " + functionFormat(exRes.getFirst(), exRes.getSecond()));
+                showFunction(MEP, from, to);
             } else {
-                genAlgSolver.setMEP(MEP);
+                JOptionPane.showMessageDialog(this, "required: to > from , to > 0, from >= 0");
+                repaint();
             }
-            Person res = genAlgSolver.solve(from, to);
-            labelResult.setText("result -> " + functionFormat(res.getValue(), res.getAdaptation()));
-            Pair<Integer, Integer> exRes = genAlgSolver.getExpectedResult(from, to);
-            labelExpectedResult.setText("expected -> " + functionFormat(exRes.getFirst(), exRes.getSecond()));
+        } catch (NumberFormatException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "interval parse error");
+            repaint();
         } catch (IllegalArgumentException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "function parse error,check syntax");
@@ -126,8 +143,39 @@ public class MainFrame extends JFrame {
             repaint();
         } catch (Exception ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "unexpected error" + ex.getMessage() + ")");
+            JOptionPane.showMessageDialog(this, "unexpected error(" + ex.getMessage() + ")");
         }
+    }
+
+    private void showFunction(MathExpressionParser mep, Integer from, Integer to) {
+        final XYSeries series = new XYSeries("f(x)");
+        for (int x = from; x <= to; x++) {
+            series.add(x, (int) mep.solve(x));
+        }
+
+        final XYSeriesCollection data = new XYSeriesCollection(series);
+        final JFreeChart chart = ChartFactory.createXYLineChart(
+                "f(x)",
+                "X",
+                "Y",
+                data,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+        if(chartFrame!=null){
+            chartFrame.setVisible(false);
+        }
+        chartFrame = new ChartFrame("function",chart);
+        chartFrame.setSize(new Dimension(600,600));
+        chartFrame.setLocationRelativeTo(null);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                chartFrame.setVisible(true);
+            }
+        }).run();
     }
 
     private String functionFormat(int at, int value) {
@@ -136,7 +184,7 @@ public class MainFrame extends JFrame {
 
 
     public void addlog(String s) {
-          textAreaLog.append("\n"+s);
+        textAreaLog.append("\n" + s);
     }
 
     public static void main(String[] args) throws
@@ -168,6 +216,6 @@ public class MainFrame extends JFrame {
     private JLabel labelTo = new JLabel("to:");
     private JLabel labelResult = new JLabel();
     private JLabel labelExpectedResult = new JLabel();
-
+    private ChartFrame chartFrame;
 }
 

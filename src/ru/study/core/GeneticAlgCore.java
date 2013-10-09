@@ -3,10 +3,7 @@ package ru.study.core;
 import ru.study.utils.MathExpressionParser;
 import ru.study.utils.Pair;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,25 +19,46 @@ public class GeneticAlgCore {
         this.MEP = MEP;
     }
 
-    public   ArrayList<Person> initialPersons(int from, int to) {
+    public ArrayList<Person> initialPersons(int from, int to) {
         int bitSize = Integer.toBinaryString(to).length() - 1;
-        //TODO выбрать рандомные из промежутка
+        int generationSize = 4;   //размер одного поколения
+        //Берем рандомные generationSize особи
         ArrayList<Person> randomp = new ArrayList<Person>();
-        randomp.add(new Person(0, bitSize,MEP));
-        randomp.add(new Person(5, bitSize,MEP));
-        randomp.add(new Person(4, bitSize,MEP));
-        randomp.add(new Person(2, bitSize,MEP));
-        return randomp;
+        int rouletteSize = 0;  //подсчитываем общий размер рулетки
+        for (int i = 0; i < generationSize; i++) {
+            Person p = new Person(randomNum(from, to), bitSize, MEP);
+            rouletteSize = rouletteSize + p.getAdaptation();
+            randomp.add(p);
+        }
+        //формируем список интервалов
+        double[][] intervals = new double[generationSize][2];
+        double prevInterval = 0;
+        for (int i = 0; i < generationSize; i++) {
+            intervals[i][0] = prevInterval;
+            double newInterval = prevInterval + (double) (randomp.get(i).getAdaptation()) / (double) rouletteSize;
+            intervals[i][1] = newInterval;
+            prevInterval = newInterval;
+        }
+        //Отбираем особей которые попадут в начальный пул - метод рулетки
+        ArrayList<Person> initialPool = new ArrayList<Person>();
+        for (int i = 0; i < generationSize; i++) {
+            initialPool.add(randomp.get(intervalId(intervals)));
+        }
+        return initialPool;
     }
 
-    public   int intervalId(double[][] intervals) {
+    private int randomNum(int from, int to) {
+        Random r = new Random();
+        return r.nextInt(to) + from;
+    }
+
+    public int intervalId(double[][] intervals) {
         double r = Math.random();
-        System.out.println("r=" + r);
-        for (int i = 1; i < intervals.length; i++) {
-            double from = intervals[i - 1][0];
-            double to = intervals[i][0];
+        for (int i = 0; i < intervals.length; i++) {
+            double from = intervals[i][0];
+            double to = intervals[i][1];
             if (r >= from && r <= to) {
-                return i - 1;
+                return i;
             }
         }
         return intervals.length - 1;
@@ -48,11 +66,12 @@ public class GeneticAlgCore {
 
     //HashSet не допускает дублирования, так что если его длина = 1 то
     //значит что все элементы списка - одинаковые - а значит можно заканчивать
-    public   boolean isBestPersonFound(ArrayList<Person> personsPool) {
+    public boolean isBestPersonFound(ArrayList<Person> personsPool) {
         return new HashSet<Person>(personsPool).size() == 1;
     }
+
     //Попарно скрещивает
-    public   ArrayList<Person> crossing(ArrayList<Person> personsPool) {
+    public ArrayList<Person> crossing(ArrayList<Person> personsPool) {
         ArrayList<Person> crossed = new ArrayList<Person>();
         for (int i = 1; i < personsPool.size(); i++) {
             Person p1 = personsPool.get(i - 1);
@@ -62,10 +81,10 @@ public class GeneticAlgCore {
             crossed.add(crossing.getSecond());
         }
         personsPool.addAll(crossed);
-        return personsPool ;
+        return personsPool;
     }
 
-    public   ArrayList<Person> getBestPersons(ArrayList<Person> personsPool) {
+    public ArrayList<Person> getBestPersons(ArrayList<Person> personsPool) {
         //Сортируем и берем первую половину
         Collections.sort(personsPool, new Comparator<Person>() {
             @Override

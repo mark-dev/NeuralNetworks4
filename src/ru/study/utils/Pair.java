@@ -30,7 +30,7 @@ public class Pair<F, S> {
 
     @Override
     public String toString() {
-        return "ru.study.utils.Pair{"+first +
+        return "Pair{"+first +
                 ";" +second +
                 '}';
     }

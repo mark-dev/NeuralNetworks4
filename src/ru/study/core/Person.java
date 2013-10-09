@@ -108,7 +108,7 @@ public class Person {
 
     @Override
     public String toString() {
-        return "ru.study.core.Person{" +
+        return "Person{" +
                 "bitSize=" + bitSize +
                 ", value=" + value +
                 ", bits=" + (bsString() != null ? bsString() : "null") +
