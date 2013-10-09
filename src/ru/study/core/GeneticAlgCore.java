@@ -21,7 +21,11 @@ public class GeneticAlgCore {
 
     public ArrayList<Person> initialPersons(int from, int to) {
         int bitSize = Integer.toBinaryString(to).length() - 1;
-        int generationSize = 4;   //размер одного поколения
+        int generationSize = (int) Math.sqrt(to - from);   //размер одного поколения
+        if (generationSize < 2) {
+            generationSize = 2;
+        }
+        System.out.println("generationSize = "+generationSize);
         //Берем рандомные generationSize особи
         ArrayList<Person> randomp = new ArrayList<Person>();
         int rouletteSize = 0;  //подсчитываем общий размер рулетки
